@@ -1,0 +1,195 @@
+# Baseline Methods Configuration
+# Configurations for all baseline methods used in comparison
+
+# ============================================================
+# GraphSAGE (Hamilton et al., 2017)
+# Inductive representation learning on graphs
+# ============================================================
+graphsage:
+  model:
+    name: "graphsage"
+    hidden_dim: 128
+    num_layers: 3
+    aggregator: "mean"  # Options: mean, max, lstm
+    dropout: 0.1
+    normalize: true
+  
+  training:
+    learning_rate: 0.001
+    weight_decay: 0.01
+    epochs: 100
+    batch_size: 32
+
+# ============================================================
+# GAT (Velickovic et al., 2018)
+# Graph Attention Networks
+# ============================================================
+gat:
+  model:
+    name: "gat"
+    hidden_dim: 128
+    num_layers: 3
+    num_heads: 4
+    dropout: 0.1
+    attention_dropout: 0.1
+    concat_heads: true
+  
+  training:
+    learning_rate: 0.001
+    weight_decay: 0.01
+    epochs: 100
+    batch_size: 32
+
+# ============================================================
+# TGN (Rossi et al., 2020)
+# Temporal Graph Networks
+# ============================================================
+tgn:
+  model:
+    name: "tgn"
+    hidden_dim: 128
+    memory_dim: 128
+    time_dim: 32
+    num_layers: 2
+    num_heads: 4
+    dropout: 0.1
+    memory_updater: "gru"  # Options: gru, rnn
+    message_function: "identity"  # Options: identity, mlp
+    aggregator: "last"  # Options: last, mean
+  
+  training:
+    learning_rate: 0.0001
+    weight_decay: 0.01
+    epochs: 100
+    batch_size: 32
+
+# ============================================================
+# TGAT (Xu et al., 2020)
+# Temporal Graph Attention
+# ============================================================
+tgat:
+  model:
+    name: "tgat"
+    hidden_dim: 128
+    time_dim: 32
+    num_layers: 2
+    num_heads: 4
+    dropout: 0.1
+    time_encoding: "learnable"  # Options: learnable, fixed
+  
+  training:
+    learning_rate: 0.0001
+    weight_decay: 0.01
+    epochs: 100
+    batch_size: 32
+
+# ============================================================
+# JODIE (Kumar et al., 2019)
+# Predicting Dynamic Embedding Trajectory
+# ============================================================
+jodie:
+  model:
+    name: "jodie"
+    hidden_dim: 128
+    embedding_dim: 128
+    num_layers: 1
+    dropout: 0.1
+    time_attention: true
+  
+  training:
+    learning_rate: 0.001
+    weight_decay: 0.01
+    epochs: 100
+    batch_size: 32
+
+# ============================================================
+# GrabPhisher (Li et al., 2022)
+# Graph-based Phishing Detection
+# ============================================================
+grabphisher:
+  model:
+    name: "grabphisher"
+    hidden_dim: 128
+    num_layers: 3
+    temporal_attention: true
+    graph_pooling: "hierarchical"
+    dropout: 0.1
+  
+  training:
+    learning_rate: 0.001
+    weight_decay: 0.01
+    epochs: 100
+    batch_size: 32
+
+# ============================================================
+# 2DynEthNet (Primary Baseline)
+# Two-Stage Dynamic Graph Neural Network
+# ============================================================
+2dynethnet:
+  model:
+    name: "2dynethnet"
+    hidden_dim: 128
+    memory_dim: 128
+    num_layers: 2
+    num_heads: 4
+    dropout: 0.1
+    
+    # Stage 1: Local feature extraction
+    local_extractor:
+      type: "gat"
+      layers: 2
+    
+    # Stage 2: Global temporal modeling
+    global_temporal:
+      type: "memory"
+      memory_size: 1000
+      update: "fifo"
+    
+    # Meta-learning (Reptile)
+    meta_learning:
+      enabled: true
+      inner_lr: 0.01
+      inner_steps: 5
+  
+  training:
+    learning_rate: 0.001
+    weight_decay: 0.01
+    epochs: 100
+    batch_size: 32
+
+# ============================================================
+# Common Settings for All Baselines
+# ============================================================
+common:
+  data:
+    dataset: "etgraph"
+    tasks: [1, 2, 3, 4, 5, 6]
+    window_size_hours: 2
+    stride_minutes: 30
+    split:
+      train: 0.70
+      val: 0.15
+      test: 0.15
+  
+  evaluation:
+    metrics:
+      - accuracy
+      - precision
+      - recall
+      - f1_score
+      - auc_roc
+      - fpr
+    
+    cross_validation:
+      enabled: true
+      folds: 5
+    
+    statistical_tests:
+      enabled: true
+      tests: ["paired_ttest", "wilcoxon"]
+      significance_level: 0.01
+  
+  hardware:
+    device: "cuda"
+    num_workers: 4
+    pin_memory: true
