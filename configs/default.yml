@@ -1,0 +1,290 @@
+# =============================================================================
+# ARTEMIS Configuration File
+# =============================================================================
+# Adversarial-Resistant Temporal Embedding Model for Intelligent Security
+# ACM CCS 2026 Submission
+# =============================================================================
+
+experiment:
+  name: "artemis_main"
+  seed: 42
+  device: "cuda"
+  num_gpus: 4
+  output_dir: "./results"
+  log_dir: "./logs"
+  checkpoint_dir: "./checkpoints"
+
+# -----------------------------------------------------------------------------
+# Model Architecture
+# -----------------------------------------------------------------------------
+model:
+  # Core dimensions
+  in_channels: 32
+  hidden_channels: 128
+  out_channels: 64
+  num_classes: 2
+  
+  # GAT configuration
+  num_heads: 4
+  dropout: 0.1
+  
+  # Innovation flags
+  use_ode: true                    # L1: Neural ODE
+  use_anomaly_memory: true         # L2: Anomaly-aware memory
+  use_multihop: true               # L3: Multi-hop broadcast
+  use_adversarial_meta: true       # L4: Adversarial meta-learning
+  use_ewc: true                    # L5: Elastic weight consolidation
+  use_certified: true              # L6: Certified adversarial training
+  
+  # L1: Neural ODE parameters
+  ode_method: "dopri5"             # ODE solver (dopri5, rk4, euler)
+  ode_rtol: 1.0e-4                 # Relative tolerance
+  ode_atol: 1.0e-5                 # Absolute tolerance
+  
+  # L2: Anomaly memory parameters
+  memory_size: 1000
+  anomaly_weight: 1.0
+  
+  # L3: Multi-hop broadcast parameters
+  broadcast_hops: 3                # Number of hops (k)
+  
+  # L5: EWC parameters
+  ewc_lambda: 5000
+  
+  # L6: Adversarial training parameters
+  adv_epsilon: 0.1                 # Perturbation bound
+  adv_weight: 0.5                  # Adversarial loss weight
+  smoothing_sigma: 0.25            # Randomized smoothing σ
+  smoothing_samples: 100           # MC samples for certification
+
+# -----------------------------------------------------------------------------
+# Training Configuration
+# -----------------------------------------------------------------------------
+training:
+  # Basic training
+  epochs: 100
+  batch_size: 32
+  accumulation_steps: 1
+  
+  # Optimizer
+  optimizer: "adamw"
+  learning_rate: 0.001
+  weight_decay: 0.01
+  beta1: 0.9
+  beta2: 0.999
+  
+  # Learning rate scheduler
+  scheduler: "cosine"
+  warmup_epochs: 5
+  min_lr: 1.0e-6
+  
+  # Early stopping
+  early_stopping: true
+  patience: 15
+  min_delta: 0.001
+  
+  # Gradient clipping
+  clip_grad_norm: 1.0
+  
+  # Mixed precision
+  mixed_precision: true
+  loss_scaling: "dynamic"
+  
+  # Label smoothing
+  label_smoothing: 0.1
+
+# -----------------------------------------------------------------------------
+# Data Configuration
+# -----------------------------------------------------------------------------
+data:
+  dataset_name: "etgraph"
+  raw_data_dir: "./data/etgraph/raw"
+  processed_data_dir: "./data/etgraph/processed"
+  
+  # Temporal graph construction
+  time_window_hours: 2.0
+  stride_hours: 0.5
+  min_nodes_per_graph: 10
+  max_nodes_per_graph: 1000
+  
+  # Six-task temporal protocol (matching 2DynEthNet)
+  num_tasks: 6
+  tasks:
+    task_1:
+      block_range: [8000000, 8100001]
+      description: "Early 2020 transactions"
+    task_2:
+      block_range: [8400001, 8500001]
+      description: "Mid 2020 transactions"
+    task_3:
+      block_range: [8900001, 8999999]
+      description: "Late 2020 transactions"
+    task_4:
+      block_range: [14250000, 14310001]
+      description: "Early 2022 transactions"
+    task_5:
+      block_range: [14310003, 14370001]
+      description: "Mid 2022 transactions"
+    task_6:
+      block_range: [14370002, 14430001]
+      description: "Late 2022 transactions"
+  
+  # Train/val/test split
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  
+  # Feature engineering
+  edge_features:
+    - "value"
+    - "gasLimit"
+    - "gasUsed"
+    - "gasPrice"
+    - "txFee"
+    - "gasEfficiency"
+    - "fromIsContract"
+    - "toIsContract"
+    - "timestamp"
+    - "blockNumber"
+    - "valueLog"
+    - "isZeroValue"
+    - "isContractCall"
+    - "complexity"
+  
+  normalization: "z-score"
+  handle_missing: "zero"
+  
+  # Data loading
+  num_workers: 8
+  pin_memory: true
+  persistent_workers: true
+  prefetch_factor: 2
+
+# -----------------------------------------------------------------------------
+# Evaluation Configuration
+# -----------------------------------------------------------------------------
+evaluation:
+  # Primary metrics (for comparison with 2DynEthNet)
+  primary_metrics:
+    - "recall"
+    - "auc"
+    - "f1"
+    - "fpr"
+  
+  # 2DynEthNet benchmarks (targets to beat)
+  benchmark_2dynethnet:
+    recall: 0.8628
+    auc: 0.8473
+    f1: 0.8570
+  
+  # Secondary metrics
+  secondary_metrics:
+    - "precision"
+    - "accuracy"
+    - "mcc"
+    - "specificity"
+  
+  # Robustness evaluation
+  robustness_evaluation:
+    enabled: true
+    attack_epsilons: [0.05, 0.1, 0.15, 0.2]
+    attack_steps: [5, 10, 20]
+    certified_radius: 0.1
+  
+  # Efficiency metrics
+  efficiency_metrics:
+    - "training_time"
+    - "inference_time"
+    - "memory_peak"
+    - "num_parameters"
+  
+  # Statistical significance
+  statistical_tests:
+    enabled: true
+    paired_ttest:
+      enabled: true
+      alpha: 0.01
+    wilcoxon:
+      enabled: true
+      alpha: 0.01
+    effect_size:
+      metric: "cohens_d"
+    confidence_interval:
+      level: 0.95
+      method: "bootstrap"
+      num_bootstrap: 1000
+
+# -----------------------------------------------------------------------------
+# Meta-Learning Configuration (L4)
+# -----------------------------------------------------------------------------
+meta_learning:
+  enabled: true
+  inner_lr: 0.01
+  outer_lr: 0.001
+  inner_steps: 5
+  adversarial_task_ratio: 0.3
+  tasks_per_batch: 4
+
+# -----------------------------------------------------------------------------
+# Ablation Study Configuration
+# -----------------------------------------------------------------------------
+ablation:
+  enabled: true
+  variants:
+    - name: "artemis_full"
+      description: "Full ARTEMIS with all innovations"
+      config: {}
+    
+    - name: "no_ode"
+      description: "Replace ODE with discrete time"
+      config:
+        use_ode: false
+    
+    - name: "no_anomaly_memory"
+      description: "Replace anomaly-aware with FIFO"
+      config:
+        use_anomaly_memory: false
+    
+    - name: "no_multihop"
+      description: "Replace multi-hop with 1-hop"
+      config:
+        use_multihop: false
+        broadcast_hops: 1
+    
+    - name: "no_adversarial_meta"
+      description: "Standard meta-learning (no adversarial tasks)"
+      config:
+        use_adversarial_meta: false
+    
+    - name: "no_ewc"
+      description: "No continual learning"
+      config:
+        use_ewc: false
+    
+    - name: "no_certified"
+      description: "No certified adversarial training"
+      config:
+        use_certified: false
+
+# -----------------------------------------------------------------------------
+# Hardware Configuration
+# -----------------------------------------------------------------------------
+hardware:
+  num_gpus: 4
+  gpu_type: "NVIDIA GeForce RTX 3090"
+  gpu_memory_gb: 24
+  use_multi_gpu: true
+  cuda_benchmark: true
+
+# -----------------------------------------------------------------------------
+# Logging Configuration
+# -----------------------------------------------------------------------------
+logging:
+  level: "INFO"
+  log_every_n_steps: 100
+  save_checkpoint_every_n_epochs: 10
+  tensorboard: true
+  wandb:
+    enabled: false
+    project: "artemis-ccs2026"
+    entity: null
