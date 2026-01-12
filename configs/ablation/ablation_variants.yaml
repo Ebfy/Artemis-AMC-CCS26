@@ -1,0 +1,138 @@
+# ARTEMIS Ablation Study Configuration
+# This file contains configurations for all ablation variants
+
+# ============================================================
+# Variant: no_neural_ode
+# Removes L1: Neural ODE temporal modeling
+# Uses discrete time steps instead of continuous dynamics
+# ============================================================
+no_neural_ode:
+  model:
+    use_neural_ode: false
+    use_anomaly_memory: true
+    use_multi_hop: true
+    use_adversarial_meta: true
+    use_ewc: true
+    use_certified: true
+    hidden_dim: 128
+    num_heads: 4
+    dropout: 0.1
+  
+  # Use discrete temporal encoding instead
+  temporal:
+    method: "discrete"
+    num_time_buckets: 100
+    time_encoding: "sinusoidal"
+
+# ============================================================
+# Variant: no_anomaly_memory
+# Removes L2: Anomaly-aware memory storage
+# Uses standard FIFO memory like TGN/2DynEthNet
+# ============================================================
+no_anomaly_memory:
+  model:
+    use_neural_ode: true
+    use_anomaly_memory: false
+    use_multi_hop: true
+    use_adversarial_meta: true
+    use_ewc: true
+    use_certified: true
+    hidden_dim: 128
+    num_heads: 4
+    dropout: 0.1
+  
+  # Use FIFO memory instead
+  memory:
+    method: "fifo"
+    memory_size: 1000
+    update_strategy: "fifo"
+
+# ============================================================
+# Variant: no_multi_hop
+# Removes L3: Multi-hop message broadcast
+# Uses standard 1-hop message passing
+# ============================================================
+no_multi_hop:
+  model:
+    use_neural_ode: true
+    use_anomaly_memory: true
+    use_multi_hop: false
+    use_adversarial_meta: true
+    use_ewc: true
+    use_certified: true
+    hidden_dim: 128
+    num_heads: 4
+    dropout: 0.1
+  
+  # Use single-hop message passing
+  message_passing:
+    num_hops: 1
+    aggregation: "mean"
+
+# ============================================================
+# Variant: no_adversarial_meta
+# Removes L4: Adversarial meta-learning
+# Uses standard training without meta-learning
+# ============================================================
+no_adversarial_meta:
+  model:
+    use_neural_ode: true
+    use_anomaly_memory: true
+    use_multi_hop: true
+    use_adversarial_meta: false
+    use_ewc: true
+    use_certified: true
+    hidden_dim: 128
+    num_heads: 4
+    dropout: 0.1
+  
+  # Standard training
+  training:
+    method: "standard"
+    adversarial_training: false
+
+# ============================================================
+# Variant: no_ewc
+# Removes L5: Elastic Weight Consolidation
+# No catastrophic forgetting mitigation
+# ============================================================
+no_ewc:
+  model:
+    use_neural_ode: true
+    use_anomaly_memory: true
+    use_multi_hop: true
+    use_adversarial_meta: true
+    use_ewc: false
+    use_certified: true
+    hidden_dim: 128
+    num_heads: 4
+    dropout: 0.1
+  
+  # No EWC regularization
+  ewc:
+    enabled: false
+
+# ============================================================
+# Variant: no_certified
+# Removes L6: Certified adversarial training
+# Uses standard adversarial training without guarantees
+# ============================================================
+no_certified:
+  model:
+    use_neural_ode: true
+    use_anomaly_memory: true
+    use_multi_hop: true
+    use_adversarial_meta: true
+    use_ewc: true
+    use_certified: false
+    hidden_dim: 128
+    num_heads: 4
+    dropout: 0.1
+  
+  # Standard adversarial training
+  certified:
+    enabled: false
+  adversarial_training:
+    method: "pgd"
+    epsilon: 0.1
+    steps: 10
