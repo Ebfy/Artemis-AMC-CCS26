@@ -77,8 +77,8 @@ artemis-artifact/
 │   ├── run_main_experiments.py  # Main evaluation (Table 3)
 │   ├── run_ablation_study.py    # Ablation study (Table 4)
 │   ├── run_adversarial_eval.py  # Robustness evaluation (Table 5)
-│   ├── run_continual_learning.py # Continual learning (RQ4)
-│   ├── run_efficiency_analysis.py # Efficiency metrics (RQ5)
+│   ├── run_continual_learning.py # Continual learning (Figure 6)
+│   ├── run_efficiency_analysis.py # Efficiency metrics (Table 7)
 │   ├── download_etgraph.py      # Dataset download script
 │   └── generate_figures.py      # Generate paper figures
 │
@@ -104,7 +104,8 @@ artemis-artifact/
     ├── figure2_innovations.svg
     ├── figure3_performance.py
     ├── figure4_robustness.py
-    └── figure5_efficiency.py
+    ├── figure5_efficiency.py
+    └── figure6_continual_learning.py
 ```
 
 ---
@@ -153,10 +154,10 @@ python scripts/run_main_experiments.py --config configs/default.yaml --quick
 ./scripts/reproduce_all.sh
 
 # Or run individual experiments:
-python scripts/run_ablation_study.py      # Table 4: ~6 hours
-python scripts/run_adversarial_eval.py    # Table 5: ~8 hours
-python scripts/run_continual_learning.py  # Figure 6: ~2 hours
-python scripts/run_efficiency_analysis.py # Table 6: ~1 hour
+python scripts/run_ablation_study.py      # Table 4: ~8-10 hours
+python scripts/run_adversarial_eval.py    # Table 5: ~2-3 hours
+python scripts/run_continual_learning.py  # Figure 6: ~6-8 hours
+python scripts/run_efficiency_analysis.py # Table 7: ~1-2 hours
 ```
 
 ---
@@ -166,23 +167,32 @@ python scripts/run_efficiency_analysis.py # Table 6: ~1 hour
 ### Minimum Requirements
 - **GPU:** 1× NVIDIA GPU with ≥16GB VRAM (e.g., RTX 3080, A100)
 - **RAM:** 64GB system memory
-- **Storage:** 50GB free disk space
-- **OS:** Ubuntu 20.04+ or similar Linux distribution
+- **Storage:** 100GB free disk space
+- **OS:** Linux (Ubuntu 20.04+ or CentOS 7+)
 
 ### Recommended Configuration (Paper Results)
-- **GPU:** 4× NVIDIA RTX 3090 (24GB each)
-- **RAM:** 384GB system memory
-- **CPU:** AMD EPYC 7742 (64 cores)
-- **Storage:** 100GB NVMe SSD
+
+The following hardware configuration was used for all experiments reported in the paper:
+
+| Component | Specification |
+|-----------|---------------|
+| **GPU** | 4× NVIDIA GeForce RTX 3090 (24GB VRAM each) |
+| **CPU** | Intel Xeon Silver 4314 (64 cores) @ 2.40GHz |
+| **RAM** | 384GB DDR4 |
+| **OS** | CentOS Linux 7 (Core) |
+| **Compiler** | GCC 4.8.5 |
+| **Storage** | 100GB+ NVMe SSD |
 
 ### Expected Runtime
 
-| Experiment | 1× RTX 3090 | 4× RTX 3090 |
-|------------|-------------|-------------|
-| Main Results (Table 3) | ~16 hours | ~4 hours |
-| Ablation Study (Table 4) | ~24 hours | ~6 hours |
-| Adversarial Eval (Table 5) | ~32 hours | ~8 hours |
-| **Total Reproduction** | ~80 hours | ~20 hours |
+| Experiment | Script | 1× RTX 3090 | 4× RTX 3090 |
+|------------|--------|-------------|-------------|
+| Main Results (Table 3) | `run_main_experiments.py` | ~16 hours | ~4-5 hours |
+| Ablation Study (Table 4) | `run_ablation_study.py` | ~32 hours | ~8-10 hours |
+| Adversarial Eval (Table 5) | `run_adversarial_eval.py` | ~8 hours | ~2-3 hours |
+| Efficiency Analysis (Table 7) | `run_efficiency_analysis.py` | ~4 hours | ~1-2 hours |
+| Continual Learning (Figure 6) | `run_continual_learning.py` | ~24 hours | ~6-8 hours |
+| **Total Reproduction** | `reproduce_all.sh` | ~84 hours | ~22-28 hours |
 
 ---
 
@@ -194,6 +204,8 @@ This artifact supports the following claims from the paper:
 > "ARTEMIS achieves 91.47% recall and 90.18% F1-score, surpassing 2DynEthNet by 5.19% in recall."
 
 **Verification:** Run `scripts/run_main_experiments.py` and check `results/main_results/metrics.json`
+
+**Tolerance:** ±0.5% due to random initialization across runs.
 
 ### Claim 2: Statistical Significance
 > "Improvements are statistically significant with p < 0.001 and Cohen's d = 1.83."
@@ -215,10 +227,30 @@ This artifact supports the following claims from the paper:
 
 **Verification:** Certified accuracy is computed via randomized smoothing in `scripts/run_adversarial_eval.py`
 
-### Claim 6: Efficiency (RQ5)
-> "Inference latency of 8.7ms enables real-time deployment."
+### Claim 6: Efficiency (Table 7)
+> "Inference latency of 8.7ms enables real-time deployment with throughput of 115 tx/s."
 
 **Verification:** Run `scripts/run_efficiency_analysis.py` and check `results/efficiency/timing.json`
+
+### Claim 7: Continual Learning (Figure 6)
+> "EWC achieves 94.2% knowledge retention versus 67.8% for naive fine-tuning."
+
+**Verification:** Run `scripts/run_continual_learning.py` and check `results/continual/retention_metrics.json`
+
+---
+
+## Result Tolerances
+
+Due to stochastic elements in training (random initialization, data shuffling, dropout), results may vary slightly between runs. Expected tolerances:
+
+| Metric | Expected Value | Tolerance |
+|--------|----------------|-----------|
+| Recall | 91.47% | ±0.5% |
+| F1-Score | 90.18% | ±0.5% |
+| AUC-ROC | 93.82% | ±0.3% |
+| Certified Accuracy | 72.34% | ±1.0% |
+| Inference Latency | 8.7ms | ±0.5ms |
+| Knowledge Retention | 94.2% | ±1.0% |
 
 ---
 
