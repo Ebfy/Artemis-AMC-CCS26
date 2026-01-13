@@ -14,8 +14,8 @@ This document provides detailed instructions for setting up the ARTEMIS environm
 ## System Requirements
 
 ### Operating System
-- Ubuntu 20.04 LTS or later (recommended)
-- CentOS 7+ or RHEL 8+
+- **CentOS 7+ or RHEL 8+** (used for paper results)
+- Ubuntu 20.04 LTS or later
 - macOS 12+ (CPU-only, limited support)
 
 ### Hardware
@@ -26,15 +26,20 @@ This document provides detailed instructions for setting up the ARTEMIS environm
 | GPU | NVIDIA GPU with CUDA Compute Capability ≥7.0 |
 | VRAM | 16GB minimum |
 | RAM | 64GB |
-| Storage | 50GB free space |
+| Storage | 100GB free space |
 | CPU | 8+ cores recommended |
 
 #### Recommended (Paper Configuration)
+
+The following hardware configuration was used for all experiments reported in the paper:
+
 | Component | Specification |
 |-----------|---------------|
-| GPU | 4× NVIDIA RTX 3090 (24GB each) |
+| GPU | 4× NVIDIA GeForce RTX 3090 (24GB VRAM each) |
+| CPU | Intel Xeon Silver 4314 (64 cores) @ 2.40GHz |
 | RAM | 384GB DDR4 |
-| CPU | AMD EPYC 7742 (64 cores) |
+| OS | CentOS Linux 7 (Core) |
+| Compiler | GCC 4.8.5 |
 | Storage | 100GB+ NVMe SSD |
 
 ### Software Prerequisites
@@ -188,7 +193,7 @@ The ETGraph dataset contains 847 million Ethereum transactions from 2019-2023.
 python scripts/download_etgraph.py --output data/etgraph
 
 # Option 2: Manual download
-# Visit: https://github.com/ETGraph/ETGraph
+# Visit: https://xblock.pro/#/dataset/68
 # Download files to data/etgraph/raw/
 
 # Preprocessing (required after download)
@@ -229,7 +234,7 @@ data/etgraph/
 python scripts/verify_setup.py
 ```
 
-Expected output:
+Expected output (on paper configuration):
 ```
 === ARTEMIS Environment Verification ===
 
@@ -240,6 +245,9 @@ Expected output:
 [✓] cuDNN version: 8600
 [✓] GPU count: 4
 [✓] GPU 0: NVIDIA GeForce RTX 3090 (24GB)
+[✓] GPU 1: NVIDIA GeForce RTX 3090 (24GB)
+[✓] GPU 2: NVIDIA GeForce RTX 3090 (24GB)
+[✓] GPU 3: NVIDIA GeForce RTX 3090 (24GB)
 [✓] PyTorch Geometric: 2.3.1
 [✓] torchdiffeq: 0.2.3
 [✓] Dataset found: data/etgraph/processed
@@ -269,6 +277,21 @@ python scripts/run_main_experiments.py \
     --epochs 2 \
     --task 1
 ```
+
+---
+
+## Expected Runtime
+
+On the recommended hardware configuration (4× RTX 3090):
+
+| Experiment | Script | Expected Runtime |
+|------------|--------|------------------|
+| Main Results (Table 3) | `run_main_experiments.py` | 4-5 hours |
+| Ablation Study (Table 4) | `run_ablation_study.py` | 8-10 hours |
+| Adversarial Eval (Table 5) | `run_adversarial_eval.py` | 2-3 hours |
+| Efficiency Analysis (Table 7) | `run_efficiency_analysis.py` | 1-2 hours |
+| Continual Learning (Figure 6) | `run_continual_learning.py` | 6-8 hours |
+| **Total Reproduction** | `reproduce_all.sh` | 22-28 hours |
 
 ---
 
@@ -314,8 +337,8 @@ pip install torchdiffeq==0.2.3
 #### 4. Dataset Download Fails
 
 **Solution:** Manual download instructions:
-1. Visit https://github.com/ETGraph/ETGraph
-2. Download `transactions.csv.gz` and `phishing_labels.csv`
+1. Visit https://xblock.pro/#/dataset/68
+2. Download the ETGraph dataset files
 3. Place in `data/etgraph/raw/`
 4. Run preprocessing: `python scripts/preprocess_etgraph.py`
 
@@ -332,9 +355,33 @@ export NCCL_SOCKET_IFNAME=eth0
 export CUDA_VISIBLE_DEVICES=0,1,2,3
 ```
 
+#### 6. GCC Version Issues (CentOS 7)
+
+If you encounter compilation errors on CentOS 7 with GCC 4.8.5:
+
+```bash
+# Install devtoolset for newer GCC (optional)
+sudo yum install centos-release-scl
+sudo yum install devtoolset-9
+scl enable devtoolset-9 bash
+```
+
 ---
 
 ## Platform-Specific Notes
+
+### CentOS 7 (Paper Configuration)
+
+```bash
+# Install NVIDIA driver
+sudo yum install nvidia-driver-latest
+
+# Install CUDA toolkit
+sudo yum install cuda-toolkit-11-8
+
+# Verify
+nvidia-smi
+```
 
 ### AWS EC2 (p3.8xlarge / p4d.24xlarge)
 
@@ -356,7 +403,7 @@ pip install torch==2.1.0 --index-url https://download.pytorch.org/whl/cu121
 
 ### Local Workstation
 
-Ensure proper cooling for extended experiments. Training can take 20+ hours on full dataset.
+Ensure proper cooling for extended experiments. Training can take 20+ hours on full dataset with single GPU.
 
 ---
 
